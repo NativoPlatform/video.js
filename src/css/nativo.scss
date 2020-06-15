@@ -35,6 +35,32 @@ $data-color: rgba(255, 200, 200, 0.2);
       text-shadow: none;
     }
 
+    // Control Bar
+    .vjs-control-bar {
+      z-index: 9999;
+      background-color: transparent;
+      background-image: -webkit-linear-gradient(
+        bottom,
+        rgba(0, 0, 0, 0.4),
+        rgba(47, 47, 47, 0)
+      );
+      background-image: -moz-linear-gradient(
+        bottom,
+        rgba(0, 0, 0, 0.4),
+        rgba(47, 47, 47, 0)
+      );
+      background-image: -o-linear-gradient(
+        bottom,
+        rgba(0, 0, 0, 0.4),
+        rgba(47, 47, 47, 0)
+      );
+      background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.4),
+        rgba(47, 47, 47, 0)
+      );
+    }
+
     // Progress Bar
     .vjs-progress-control {
       .vjs-slider:focus {
@@ -73,12 +99,6 @@ $data-color: rgba(255, 200, 200, 0.2);
       }
     }
 
-    // Control Bar
-    .vjs-control-bar {
-      z-index: 9999;
-      background-color: transparent;
-    }
-
     // Control sizing
     .vjs-play-control,
     .vjs-volume-panel,
@@ -101,14 +121,20 @@ $data-color: rgba(255, 200, 200, 0.2);
       }
       .vjs-mute-control.vjs-vol-0 .vjs-icon-placeholder:before {
         @extend .nativo-icon;
+        width: 20px;
+        height: 20px;
         background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+TXV0ZSBJY29uPC90aXRsZT48ZyBmaWxsPSIjRkZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0xMy42NTcgOGwyLjAwNi0yLjA3NGMuMDI4LS4wMzcuMDQ2LS4wNzUuMDQ2LS4xMjJzLS4wMi0uMDg0LS4wNDctLjEyMmwtMS4xNTItMS4xOWMtLjAzNi0uMDMtLjA3Mi0uMDQ4LS4xMTctLjA0OC0uMDQ2IDAtLjA4OC4wMTgtLjEyNS4wNDdsLTIuMDEgMi4wNzMtMi4wMjItMi4wNzJjLS4wMzYtLjAyOC0uMDg4LS4wNDYtLjEzMy0uMDQ2LS4wNDUgMC0uMDgyLjAxOC0uMTE4LjA0N0w4LjgzMyA1LjY4M2MtLjAyOC4wMzgtLjA0Ni4wNzUtLjA0Ni4xMjJzLjAxOC4wODUuMDQ2LjEyMkwxMC44NCA4bC0yLjAwNyAyLjA3NGMtLjAyOC4wMzctLjA0Ni4wNzUtLjA0Ni4xMjJzLjAxOC4wODQuMDQ2LjEyMmwxLjE1MiAxLjE5Yy4wMzYuMDMuMDczLjA0OC4xMTguMDQ4cy4wOTctLjAxOC4xMzMtLjA0N2wyLjAyLTIuMDczIDIuMDEyIDIuMDcyYy4wMzcuMDI4LjA4LjA0Ni4xMjUuMDQ2cy4wOC0uMDE4LjExOC0uMDQ3bDEuMTUzLTEuMTkyYy4wMjgtLjAzOC4wNDYtLjA3NS4wNDYtLjEyMnMtLjAyLS4wODUtLjA0Ny0uMTIyTDEzLjY1NyA4ek02Ljc4NyAxLjg2YzAtLjEyNi0uMDcyLS4yNTItLjE5Ny0uMzA2LS4xMjYtLjAzNi0uMjctLjAxOC0uMzYuMDcyTDIuNzY2IDUuMDlILjMyM2MtLjE4IDAtLjMyMy4xNDUtLjMyMy4zMjR2NS4xNzJjMCAuMTguMTQ0LjMyMy4zMjMuMzIzaDIuNDQybDMuNDY2IDMuNDY0Yy4wOS4wOS4yMzQuMTA4LjM2LjA3Mi4xMjUtLjA1NC4xOTctLjE4LjE5Ny0uMzA1VjEuODZ6Ii8+PC9nPjwvc3ZnPg==);
       }
       .vjs-mute-control.vjs-vol-1 .vjs-icon-placeholder:before {
         @extend .nativo-icon;
+        width: 20px;
+        height: 20px;
         background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+Vm9sdW1lIEljb24gKDEtNDkpPC90aXRsZT48cGF0aCBkPSJNNi43ODcgMS44NmMwLS4xMjYtLjA3Mi0uMjUyLS4xOTctLjMwNi0uMTI2LS4wMzYtLjI3LS4wMTgtLjM2LjA3MkwyLjc2NiA1LjA5SC4zMjNjLS4xOCAwLS4zMjMuMTQ1LS4zMjMuMzI0djUuMTcyYzAgLjE4LjE0NC4zMjMuMzIzLjMyM2gyLjQ0MmwzLjQ2NiAzLjQ2NGMuMDkuMDkuMjM0LjEwOC4zNi4wNzIuMTI1LS4wNTQuMTk3LS4xOC4xOTctLjMwNVYxLjg2eiIgZmlsbD0iI0ZGRiIgZmlsbC1ydWxlPSJldmVub2RkIi8+PC9zdmc+);
       }
       .vjs-mute-control.vjs-vol-2 .vjs-icon-placeholder:before {
         @extend .nativo-icon;
+        width: 20px;
+        height: 20px;
         background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48dGl0bGU+Vm9sdW1lIEljb24gKDUwLTc1KTwvdGl0bGU+PHBhdGggZD0iTTEwLjMwNiAxMy4xMzVjLS4xMjUuMTI2LS4zMjMuMTI2LS40NDggMGwtLjkxNi0uODk4Yy0uMTI2LS4xNDMtLjEyNi0uMzQgMC0uNDY2IDIuMDgzLTIuMDgyIDIuMDgzLTUuNDU4IDAtNy41NC0uMTI2LS4xMjYtLjEyNi0uMzI0IDAtLjQ1bC45MTYtLjkxNWMuMTI1LS4xMjYuMzIzLS4xMjYuNDQ4IDAgMi44MzcgMi44MzcgMi44MzcgNy40MzMgMCAxMC4yN3pNNi43ODYgMS44NmMwLS4xMjYtLjA3LS4yNTItLjE5Ni0uMzA2LS4xMjYtLjAzNi0uMjctLjAxOC0uMzYuMDcyTDIuNzY2IDUuMDlILjMyM2MtLjE4IDAtLjMyMy4xNDUtLjMyMy4zMjR2NS4xNzJjMCAuMTguMTQ0LjMyMy4zMjMuMzIzaDIuNDQybDMuNDY2IDMuNDY0Yy4wOS4wOS4yMzQuMTA4LjM2LjA3Mi4xMjUtLjA1NC4xOTctLjE4LjE5Ny0uMzA1VjEuODZ6IiBmaWxsPSIjRkZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48L3N2Zz4=); //url('../img/Volume_50-75_Icon.svg');
       }
 
@@ -192,6 +218,11 @@ $data-color: rgba(255, 200, 200, 0.2);
       border-image: initial;
       margin: 0px -50% 0px 0px;
     }
+  }
+
+  // VAST plugin specific
+  .vjs-ads-label.vjs-control {
+    display: none;
   }
 }
 
