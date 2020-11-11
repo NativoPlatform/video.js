@@ -35,6 +35,11 @@ $data-color: rgba(255, 200, 200, 0.2);
       text-shadow: none;
     }
 
+    // Big Play Button
+    .vjs-big-play-button {
+      display: none;
+    }
+
     // Control Bar
     .vjs-control-bar {
       z-index: 9999;
