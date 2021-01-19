@@ -41,3 +41,5 @@ lang/zh-Han*.json
 
 # Ignore local package creds
 .npmrc
+# netlify deploy
+deploy/
