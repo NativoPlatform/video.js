@@ -72,6 +72,11 @@ const autoSetup = function() {
  *        The videojs library function
  */
 function autoSetupTimeout(wait, vjs) {
+  // Protect against breakage in non-browser environments
+  if (!Dom.isReal()) {
+    return;
+  }
+
   if (vjs) {
     window['ntv-videojs'] = vjs;
   }
