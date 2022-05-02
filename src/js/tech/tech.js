@@ -966,9 +966,9 @@ class Tech extends Component {
 
     name = toTitleCase(name);
 
-    if (window && window.videojs && window.videojs[name]) {
+    if (window && window['ntv-videojs'] && window['ntv-videojs'][name]) {
       log.warn(`The ${name} tech was added to the videojs object when it should be registered using videojs.registerTech(name, tech)`);
-      return window.videojs[name];
+      return window['ntv-videojs'][name];
     }
   }
 }
