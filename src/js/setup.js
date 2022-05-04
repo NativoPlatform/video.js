@@ -10,7 +10,7 @@ import window from 'global/window';
 
 let _windowLoaded = false;
 
-window['ntv-videojs'] = undefined;
+let ntv_videojs;
 
 /**
  * Set up any tags that have a data-setup `attribute` when the player is started.
@@ -18,7 +18,7 @@ window['ntv-videojs'] = undefined;
 const autoSetup = function() {
 
   // Protect against breakage in non-browser environments and check global autoSetup option.
-  if (!Dom.isReal() || window['ntv-videojs'].options.autoSetup === false) {
+  if (!Dom.isReal() || ntv_videojs.options.autoSetup === false) {
     return;
   }
 
@@ -44,7 +44,7 @@ const autoSetup = function() {
           // We only auto-setup if they've added the data-setup attr.
           if (options !== null) {
             // Create new video.js instance.
-            window['ntv-videojs'](mediaEl);
+            ntv_videojs(mediaEl);
           }
         }
 
@@ -73,7 +73,7 @@ const autoSetup = function() {
  */
 function autoSetupTimeout(wait, vjs) {
   if (vjs) {
-    window['ntv-videojs'] = vjs;
+    ntv_videojs = vjs;
   }
 
   window.setTimeout(autoSetup, wait);
