@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /**
  * @file setup.js - Functions for setting up a player without
  * user interaction based on the data-setup `attribute` of the video tag.

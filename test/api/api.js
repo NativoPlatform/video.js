@@ -1,4 +1,5 @@
 /* eslint-env qunit */
+/* eslint-disable camelcase */
 /**
  * These tests run on the minified, window.ntv_videojs and ensure the needed
  * APIs still exist
