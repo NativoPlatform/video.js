@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 /**
  * @file setup.js - Functions for setting up a player without
  * user interaction based on the data-setup `attribute` of the video tag.
@@ -9,7 +10,8 @@ import document from 'global/document';
 import window from 'global/window';
 
 let _windowLoaded = false;
-let videojs;
+
+let ntv_videojs;
 
 /**
  * Set up any tags that have a data-setup `attribute` when the player is started.
@@ -17,7 +19,7 @@ let videojs;
 const autoSetup = function() {
 
   // Protect against breakage in non-browser environments and check global autoSetup option.
-  if (!Dom.isReal() || videojs.options.autoSetup === false) {
+  if (!Dom.isReal() || ntv_videojs.options.autoSetup === false) {
     return;
   }
 
@@ -43,7 +45,7 @@ const autoSetup = function() {
           // We only auto-setup if they've added the data-setup attr.
           if (options !== null) {
             // Create new video.js instance.
-            videojs(mediaEl);
+            ntv_videojs(mediaEl);
           }
         }
 
@@ -72,7 +74,7 @@ const autoSetup = function() {
  */
 function autoSetupTimeout(wait, vjs) {
   if (vjs) {
-    videojs = vjs;
+    ntv_videojs = vjs;
   }
 
   window.setTimeout(autoSetup, wait);
