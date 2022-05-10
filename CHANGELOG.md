@@ -1,3 +1,26 @@
+<a name="7.8.6"></a>
+## [7.8.6](https://github.com/NativoPlatform/video.js/compare/v7.8.1...v7.8.6) (2022-05-10)
+
+### Features
+
+* Add a default, plugin-specific logger to advanced plugins ([#6693](https://github.com/NativoPlatform/video.js/issues/6693)) ([78cf13c](https://github.com/NativoPlatform/video.js/commit/78cf13c))
+* Add named requestAnimationFrame to prevent performance issues ([#6627](https://github.com/NativoPlatform/video.js/issues/6627)) ([b06d81d](https://github.com/NativoPlatform/video.js/commit/b06d81d)), closes [#5937](https://github.com/NativoPlatform/video.js/issues/5937)
+* adds disablePictureInPicture method to the player API. ([#6378](https://github.com/NativoPlatform/video.js/issues/6378)) ([dbd5203](https://github.com/NativoPlatform/video.js/commit/dbd5203))
+* support fastSeek during scrubbing if available ([#6525](https://github.com/NativoPlatform/video.js/issues/6525)) ([8c66c58](https://github.com/NativoPlatform/video.js/commit/8c66c58))
+
+### Bug Fixes
+
+* **fs:** don't set player element css props on native fullscreen ([#6673](https://github.com/NativoPlatform/video.js/issues/6673)) ([d6b07f0](https://github.com/NativoPlatform/video.js/commit/d6b07f0)), closes [#6640](https://github.com/NativoPlatform/video.js/issues/6640)
+* addChild with index should allow for children that are elements ([#6644](https://github.com/NativoPlatform/video.js/issues/6644)) ([0b91f74](https://github.com/NativoPlatform/video.js/commit/0b91f74)), closes [#6297](https://github.com/NativoPlatform/video.js/issues/6297)
+* **lang:** Update pt-BR.json ([#6598](https://github.com/NativoPlatform/video.js/issues/6598)) ([90e2b0f](https://github.com/NativoPlatform/video.js/commit/90e2b0f))
+* **package:** update to [@videojs](https://github.com/videojs)/http-streaming[@1](https://github.com/1).13.3 ([#6610](https://github.com/NativoPlatform/video.js/issues/6610)) ([f779bad](https://github.com/NativoPlatform/video.js/commit/f779bad))
+* **text-tracks:** set withCredentials on XHR if crossOrigin='use-credentials' ([#6588](https://github.com/NativoPlatform/video.js/issues/6588)) ([a4ea1f9](https://github.com/NativoPlatform/video.js/commit/a4ea1f9)), closes [#6587](https://github.com/NativoPlatform/video.js/issues/6587)
+
+### Documentation
+
+* **faq:** update FAQ about HLS and DASH with VHS ([#6608](https://github.com/NativoPlatform/video.js/issues/6608)) ([808d818](https://github.com/NativoPlatform/video.js/commit/808d818)), closes [#6590](https://github.com/NativoPlatform/video.js/issues/6590)
+* **README:** Update CDN version urls ([#6658](https://github.com/NativoPlatform/video.js/issues/6658)) ([756fbfc](https://github.com/NativoPlatform/video.js/commit/756fbfc))
+
 <a name="7.8.1"></a>
 ## [7.8.1](https://github.com/videojs/video.js/compare/v7.8.0...v7.8.1) (2020-04-16)
 
