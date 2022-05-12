@@ -1,3 +1,6 @@
+<a name="7.8.7"></a>
+## [7.8.7](https://github.com/NativoPlatform/video.js/compare/v7.8.6...v7.8.7) (2022-05-12)
+
 <a name="7.8.6"></a>
 ## [7.8.6](https://github.com/NativoPlatform/video.js/compare/v7.8.1...v7.8.6) (2022-05-10)
 
