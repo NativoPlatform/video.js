@@ -1,16 +1,17 @@
 /* eslint-env qunit */
 /* eslint-disable camelcase */
+/* eslint-disable dot-notation */
 /**
  * These tests run on the minified, window.ntv_videojs and ensure the needed
  * APIs still exist
  */
 import document from 'global/document';
 import window from 'global/window';
-const videojs = window.ntv_videojs;
+const videojs = window['ntv_videojs'];
 
 QUnit.module('Player API');
 QUnit.test('videojs should exist on the window', function(assert) {
-  assert.ok(window.ntv_videojs, 'videojs exists on the window');
+  assert.ok(window['ntv_videojs'], 'videojs exists on the window');
 });
 
 QUnit.test('should be able to access expected player API methods', function(assert) {
