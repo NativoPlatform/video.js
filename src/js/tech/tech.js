@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+/* eslint-disable dot-notation */
 /**
  * @file tech.js
  */
@@ -403,6 +405,7 @@ class Tech extends Component {
     // clear out all tracks because we can't reuse them between techs
     types.forEach((type) => {
       const list = this[`${type}Tracks`]() || [];
+
       let i = list.length;
 
       while (i--) {
@@ -422,6 +425,7 @@ class Tech extends Component {
    */
   cleanupAutoTextTracks() {
     const list = this.autoRemoteTextTracks_ || [];
+
     let i = list.length;
 
     while (i--) {
@@ -1054,9 +1058,9 @@ class Tech extends Component {
 
     name = toTitleCase(name);
 
-    if (window && window['ntv-videojs'] && window['ntv-videojs'][name]) {
+    if (window && window['ntv_videojs'] && window['ntv_videojs'][name]) {
       log.warn(`The ${name} tech was added to the videojs object when it should be registered using videojs.registerTech(name, tech)`);
-      return window['ntv-videojs'][name];
+      return window.window['ntv_videojs'][name];
     }
   }
 }
@@ -1262,6 +1266,7 @@ Tech.withSourceHandlers = function(_Tech) {
    */
   _Tech.canPlayType = function(type) {
     const handlers = _Tech.sourceHandlers || [];
+
     let can;
 
     for (let i = 0; i < handlers.length; i++) {
@@ -1292,6 +1297,7 @@ Tech.withSourceHandlers = function(_Tech) {
    */
   _Tech.selectSourceHandler = function(source, options) {
     const handlers = _Tech.sourceHandlers || [];
+
     let can;
 
     for (let i = 0; i < handlers.length; i++) {
