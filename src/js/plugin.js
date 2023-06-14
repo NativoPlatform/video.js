@@ -4,7 +4,6 @@
 import evented from './mixins/evented';
 import stateful from './mixins/stateful';
 import * as Events from './utils/events';
-import * as Fn from './utils/fn';
 import log from './utils/log';
 import Player from './player';
 
@@ -53,7 +52,7 @@ const pluginExists = (name) => pluginStorage.hasOwnProperty(name);
  * @param   {string} name
  *          The name of a plugin.
  *
- * @return {Function|undefined}
+ * @return {typeof Plugin|Function|undefined}
  *          The plugin (or undefined).
  */
 const getPlugin = (name) => pluginExists(name) ? pluginStorage[name] : undefined;
@@ -217,7 +216,7 @@ class Plugin {
 
     // Auto-bind the dispose method so we can use it as a listener and unbind
     // it later easily.
-    this.dispose = Fn.bind(this, this.dispose);
+    this.dispose = this.dispose.bind(this);
 
     // If the player is disposed, dispose the plugin.
     player.on('dispose', this.dispose);
@@ -296,7 +295,7 @@ class Plugin {
      * Signals that a advanced plugin is about to be disposed.
      *
      * @event Plugin#dispose
-     * @type  {EventTarget~Event}
+     * @type  {Event}
      */
     this.trigger('dispose');
     this.off();
@@ -337,10 +336,10 @@ class Plugin {
    *          must not match an existing plugin or a method on the `Player`
    *          prototype.
    *
-   * @param   {Function} plugin
+   * @param   {typeof Plugin|Function} plugin
    *          A sub-class of `Plugin` or a function for basic plugins.
    *
-   * @return {Function}
+   * @return {typeof Plugin|Function}
    *          For advanced plugins, a factory function for that plugin. For
    *          basic plugins, a wrapper function that initializes the plugin.
    */
@@ -445,7 +444,7 @@ class Plugin {
  * @param    {string} name
  *           The name of a plugin.
  *
- * @returns  {Function|undefined}
+ * @returns  {typeof Plugin|Function|undefined}
  *           The plugin (or `undefined`).
  */
 Plugin.getPlugin = getPlugin;

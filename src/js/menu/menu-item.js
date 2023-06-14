@@ -3,9 +3,9 @@
  */
 import ClickableComponent from '../clickable-component.js';
 import Component from '../component.js';
-import {assign} from '../utils/obj';
 import {MenuKeys} from './menu-keys.js';
 import keycode from 'keycode';
+import {createEl} from '../utils/dom.js';
 
 /**
  * The component for a menu item. `<li>`
@@ -17,7 +17,7 @@ class MenuItem extends ClickableComponent {
   /**
    * Creates an instance of the this class.
    *
-   * @param {Player} player
+   * @param { import('../player').default } player
    *        The `Player` that this class should be attached to.
    *
    * @param {Object} [options={}]
@@ -63,18 +63,25 @@ class MenuItem extends ClickableComponent {
     // The control is textual, not just an icon
     this.nonIconControl = true;
 
-    return super.createEl('li', assign({
+    const el = super.createEl('li', Object.assign({
       className: 'vjs-menu-item',
-      innerHTML: `<span class="vjs-menu-item-text">${this.localize(this.options_.label)}</span>`,
       tabIndex: -1
     }, props), attrs);
+
+    // swap icon with menu item text.
+    el.replaceChild(createEl('span', {
+      className: 'vjs-menu-item-text',
+      textContent: this.localize(this.options_.label)
+    }), el.querySelector('.vjs-icon-placeholder'));
+
+    return el;
   }
 
   /**
    * Ignore keys which are used by the menu, but pass any other ones up. See
    * {@link ClickableComponent#handleKeyDown} for instances where this is called.
    *
-   * @param {EventTarget~Event} event
+   * @param {Event} event
    *        The `keydown` event that caused this function to be called.
    *
    * @listens keydown
@@ -90,7 +97,7 @@ class MenuItem extends ClickableComponent {
    * Any click on a `MenuItem` puts it into the selected state.
    * See {@link ClickableComponent#handleClick} for instances where this is called.
    *
-   * @param {EventTarget~Event} event
+   * @param {Event} event
    *        The `keydown`, `tap`, or `click` event that caused this function to be
    *        called.
    *

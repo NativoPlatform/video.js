@@ -3,8 +3,9 @@
  */
 import Component from '../../component.js';
 import * as Dom from '../../utils/dom.js';
-import clamp from '../../utils/clamp.js';
-import {bind, throttle, UPDATE_REFRESH_INTERVAL} from '../../utils/fn.js';
+import {clamp} from '../../utils/num.js';
+import {bind_, throttle, UPDATE_REFRESH_INTERVAL} from '../../utils/fn.js';
+import {silencePromise} from '../../utils/promise';
 
 import './seek-bar.js';
 
@@ -19,7 +20,7 @@ class ProgressControl extends Component {
   /**
    * Creates an instance of this class.
    *
-   * @param {Player} player
+   * @param { import('../../player').default } player
    *        The `Player` that this class should be attached to.
    *
    * @param {Object} [options]
@@ -27,8 +28,10 @@ class ProgressControl extends Component {
    */
   constructor(player, options) {
     super(player, options);
-    this.handleMouseMove = throttle(bind(this, this.handleMouseMove), UPDATE_REFRESH_INTERVAL);
-    this.throttledHandleMouseSeek = throttle(bind(this, this.handleMouseSeek), UPDATE_REFRESH_INTERVAL);
+    this.handleMouseMove = throttle(bind_(this, this.handleMouseMove), UPDATE_REFRESH_INTERVAL);
+    this.throttledHandleMouseSeek = throttle(bind_(this, this.handleMouseSeek), UPDATE_REFRESH_INTERVAL);
+    this.handleMouseUpHandler_ = (e) => this.handleMouseUp(e);
+    this.handleMouseDownHandler_ = (e) => this.handleMouseDown(e);
 
     this.enable();
   }
@@ -49,7 +52,7 @@ class ProgressControl extends Component {
    * When the mouse moves over the `ProgressControl`, the pointer position
    * gets passed down to the `MouseTimeDisplay` component.
    *
-   * @param {EventTarget~Event} event
+   * @param {Event} event
    *        The `mousemove` event that caused this function to run.
    *
    * @listen mousemove
@@ -69,13 +72,13 @@ class ProgressControl extends Component {
     }
 
     const seekBarEl = seekBar.el();
-    const seekBarRect = Dom.getBoundingClientRect(seekBarEl);
+    const seekBarRect = Dom.findPosition(seekBarEl);
     let seekBarPoint = Dom.getPointerPosition(seekBarEl, event).x;
 
     // The default skin has a gap on either side of the `SeekBar`. This means
     // that it's possible to trigger this behavior outside the boundaries of
     // the `SeekBar`. This ensures we stay within it at all times.
-    seekBarPoint = clamp(0, 1, seekBarPoint);
+    seekBarPoint = clamp(seekBarPoint, 0, 1);
 
     if (mouseTimeDisplay) {
       mouseTimeDisplay.update(seekBarRect, seekBarPoint);
@@ -91,7 +94,7 @@ class ProgressControl extends Component {
    * A throttled version of the {@link ProgressControl#handleMouseSeek} listener.
    *
    * @method ProgressControl#throttledHandleMouseSeek
-   * @param {EventTarget~Event} event
+   * @param {Event} event
    *        The `mousemove` event that caused this function to run.
    *
    * @listen mousemove
@@ -101,7 +104,7 @@ class ProgressControl extends Component {
   /**
    * Handle `mousemove` or `touchmove` events on the `ProgressControl`.
    *
-   * @param {EventTarget~Event} event
+   * @param {Event} event
    *        `mousedown` or `touchstart` event that triggered this function
    *
    * @listens mousemove
@@ -135,13 +138,25 @@ class ProgressControl extends Component {
       return;
     }
 
-    this.off(['mousedown', 'touchstart'], this.handleMouseDown);
+    this.off(['mousedown', 'touchstart'], this.handleMouseDownHandler_);
     this.off(this.el_, 'mousemove', this.handleMouseMove);
-    this.handleMouseUp();
+
+    this.removeListenersAddedOnMousedownAndTouchstart();
 
     this.addClass('disabled');
 
     this.enabled_ = false;
+
+    // Restore normal playback state if controls are disabled while scrubbing
+    if (this.player_.scrubbing()) {
+      const seekBar = this.getChild('seekBar');
+
+      this.player_.scrubbing(false);
+
+      if (seekBar.videoWasPlaying) {
+        silencePromise(this.player_.play());
+      }
+    }
   }
 
   /**
@@ -154,7 +169,7 @@ class ProgressControl extends Component {
       return;
     }
 
-    this.on(['mousedown', 'touchstart'], this.handleMouseDown);
+    this.on(['mousedown', 'touchstart'], this.handleMouseDownHandler_);
     this.on(this.el_, 'mousemove', this.handleMouseMove);
     this.removeClass('disabled');
 
@@ -162,9 +177,21 @@ class ProgressControl extends Component {
   }
 
   /**
+   * Cleanup listeners after the user finishes interacting with the progress controls
+   */
+  removeListenersAddedOnMousedownAndTouchstart() {
+    const doc = this.el_.ownerDocument;
+
+    this.off(doc, 'mousemove', this.throttledHandleMouseSeek);
+    this.off(doc, 'touchmove', this.throttledHandleMouseSeek);
+    this.off(doc, 'mouseup', this.handleMouseUpHandler_);
+    this.off(doc, 'touchend', this.handleMouseUpHandler_);
+  }
+
+  /**
    * Handle `mousedown` or `touchstart` events on the `ProgressControl`.
    *
-   * @param {EventTarget~Event} event
+   * @param {Event} event
    *        `mousedown` or `touchstart` event that triggered this function
    *
    * @listens mousedown
@@ -180,31 +207,27 @@ class ProgressControl extends Component {
 
     this.on(doc, 'mousemove', this.throttledHandleMouseSeek);
     this.on(doc, 'touchmove', this.throttledHandleMouseSeek);
-    this.on(doc, 'mouseup', this.handleMouseUp);
-    this.on(doc, 'touchend', this.handleMouseUp);
+    this.on(doc, 'mouseup', this.handleMouseUpHandler_);
+    this.on(doc, 'touchend', this.handleMouseUpHandler_);
   }
 
   /**
    * Handle `mouseup` or `touchend` events on the `ProgressControl`.
    *
-   * @param {EventTarget~Event} event
+   * @param {Event} event
    *        `mouseup` or `touchend` event that triggered this function.
    *
    * @listens touchend
    * @listens mouseup
    */
   handleMouseUp(event) {
-    const doc = this.el_.ownerDocument;
     const seekBar = this.getChild('seekBar');
 
     if (seekBar) {
       seekBar.handleMouseUp(event);
     }
 
-    this.off(doc, 'mousemove', this.throttledHandleMouseSeek);
-    this.off(doc, 'touchmove', this.throttledHandleMouseSeek);
-    this.off(doc, 'mouseup', this.handleMouseUp);
-    this.off(doc, 'touchend', this.handleMouseUp);
+    this.removeListenersAddedOnMousedownAndTouchstart();
   }
 }
 

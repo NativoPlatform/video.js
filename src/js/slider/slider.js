@@ -3,9 +3,8 @@
  */
 import Component from '../component.js';
 import * as Dom from '../utils/dom.js';
-import {assign} from '../utils/obj';
 import {IS_CHROME} from '../utils/browser.js';
-import clamp from '../utils/clamp.js';
+import {clamp} from '../utils/num.js';
 import keycode from 'keycode';
 
 /**
@@ -19,7 +18,7 @@ class Slider extends Component {
   /**
  * Create an instance of this class
  *
- * @param {Player} player
+ * @param { import('../player').default } player
  *        The `Player` that this class should be attached to.
  *
  * @param {Object} [options]
@@ -27,6 +26,13 @@ class Slider extends Component {
  */
   constructor(player, options) {
     super(player, options);
+
+    this.handleMouseDown_ = (e) => this.handleMouseDown(e);
+    this.handleMouseUp_ = (e) => this.handleMouseUp(e);
+    this.handleKeyDown_ = (e) => this.handleKeyDown(e);
+    this.handleClick_ = (e) => this.handleClick(e);
+    this.handleMouseMove_ = (e) => this.handleMouseMove(e);
+    this.update_ = (e) => this.update(e);
 
     // Set property names to bar to match with the child Slider class is looking for
     this.bar = this.getChild(this.options_.barName);
@@ -55,10 +61,10 @@ class Slider extends Component {
       return;
     }
 
-    this.on('mousedown', this.handleMouseDown);
-    this.on('touchstart', this.handleMouseDown);
-    this.on('keydown', this.handleKeyDown);
-    this.on('click', this.handleClick);
+    this.on('mousedown', this.handleMouseDown_);
+    this.on('touchstart', this.handleMouseDown_);
+    this.on('keydown', this.handleKeyDown_);
+    this.on('click', this.handleClick_);
 
     // TODO: deprecated, controlsvisible does not seem to be fired
     this.on(this.player_, 'controlsvisible', this.update);
@@ -82,15 +88,15 @@ class Slider extends Component {
     }
     const doc = this.bar.el_.ownerDocument;
 
-    this.off('mousedown', this.handleMouseDown);
-    this.off('touchstart', this.handleMouseDown);
-    this.off('keydown', this.handleKeyDown);
-    this.off('click', this.handleClick);
-    this.off(this.player_, 'controlsvisible', this.update);
-    this.off(doc, 'mousemove', this.handleMouseMove);
-    this.off(doc, 'mouseup', this.handleMouseUp);
-    this.off(doc, 'touchmove', this.handleMouseMove);
-    this.off(doc, 'touchend', this.handleMouseUp);
+    this.off('mousedown', this.handleMouseDown_);
+    this.off('touchstart', this.handleMouseDown_);
+    this.off('keydown', this.handleKeyDown_);
+    this.off('click', this.handleClick_);
+    this.off(this.player_, 'controlsvisible', this.update_);
+    this.off(doc, 'mousemove', this.handleMouseMove_);
+    this.off(doc, 'mouseup', this.handleMouseUp_);
+    this.off(doc, 'touchmove', this.handleMouseMove_);
+    this.off(doc, 'touchend', this.handleMouseUp_);
     this.removeAttribute('tabindex');
 
     this.addClass('disabled');
@@ -119,16 +125,15 @@ class Slider extends Component {
   createEl(type, props = {}, attributes = {}) {
     // Add the slider element class to all sub classes
     props.className = props.className + ' vjs-slider';
-    props = assign({
+    props = Object.assign({
       tabIndex: 0
     }, props);
 
-    attributes = assign({
+    attributes = Object.assign({
       'role': 'slider',
       'aria-valuenow': 0,
       'aria-valuemin': 0,
-      'aria-valuemax': 100,
-      'tabIndex': 0
+      'aria-valuemax': 100
     }, attributes);
 
     return super.createEl(type, props, attributes);
@@ -137,7 +142,7 @@ class Slider extends Component {
   /**
    * Handle `mousedown` or `touchstart` events on the `Slider`.
    *
-   * @param {EventTarget~Event} event
+   * @param {MouseEvent} event
    *        `mousedown` or `touchstart` event that triggered this function
    *
    * @listens mousedown
@@ -152,7 +157,7 @@ class Slider extends Component {
     }
     // Do not call preventDefault() on touchstart in Chrome
     // to avoid console warnings. Use a 'touch-action: none' style
-    // instead to prevent unintented scrolling.
+    // instead to prevent unintended scrolling.
     // https://developers.google.com/web/updates/2017/01/scrolling-intervention
     if (event.type === 'touchstart' && !IS_CHROME) {
       event.preventDefault();
@@ -164,16 +169,16 @@ class Slider extends Component {
      * Triggered when the slider is in an active state
      *
      * @event Slider#slideractive
-     * @type {EventTarget~Event}
+     * @type {MouseEvent}
      */
     this.trigger('slideractive');
 
-    this.on(doc, 'mousemove', this.handleMouseMove);
-    this.on(doc, 'mouseup', this.handleMouseUp);
-    this.on(doc, 'touchmove', this.handleMouseMove);
-    this.on(doc, 'touchend', this.handleMouseUp);
+    this.on(doc, 'mousemove', this.handleMouseMove_);
+    this.on(doc, 'mouseup', this.handleMouseUp_);
+    this.on(doc, 'touchmove', this.handleMouseMove_);
+    this.on(doc, 'touchend', this.handleMouseUp_);
 
-    this.handleMouseMove(event);
+    this.handleMouseMove(event, true);
   }
 
   /**
@@ -182,9 +187,10 @@ class Slider extends Component {
    * `mousedown` and `touchstart`. This is due to {@link Slider#handleMouseDown} and
    * {@link Slider#handleMouseUp}.
    *
-   * @param {EventTarget~Event} event
+   * @param {MouseEvent} event
    *        `mousedown`, `mousemove`, `touchstart`, or `touchmove` event that triggered
    *        this function
+   * @param {boolean} mouseDown this is a flag that should be set to true if `handleMouseMove` is called directly. It allows us to skip things that should not happen if coming from mouse down but should happen on regular mouse move handler. Defaults to false.
    *
    * @listens mousemove
    * @listens touchmove
@@ -194,14 +200,14 @@ class Slider extends Component {
   /**
    * Handle `mouseup` or `touchend` events on the `Slider`.
    *
-   * @param {EventTarget~Event} event
+   * @param {MouseEvent} event
    *        `mouseup` or `touchend` event that triggered this function.
    *
    * @listens touchend
    * @listens mouseup
    * @fires Slider#sliderinactive
    */
-  handleMouseUp() {
+  handleMouseUp(event) {
     const doc = this.bar.el_.ownerDocument;
 
     Dom.unblockTextSelection();
@@ -211,14 +217,14 @@ class Slider extends Component {
      * Triggered when the slider is no longer in an active state.
      *
      * @event Slider#sliderinactive
-     * @type {EventTarget~Event}
+     * @type {Event}
      */
     this.trigger('sliderinactive');
 
-    this.off(doc, 'mousemove', this.handleMouseMove);
-    this.off(doc, 'mouseup', this.handleMouseUp);
-    this.off(doc, 'touchmove', this.handleMouseMove);
-    this.off(doc, 'touchend', this.handleMouseUp);
+    this.off(doc, 'mousemove', this.handleMouseMove_);
+    this.off(doc, 'mouseup', this.handleMouseUp_);
+    this.off(doc, 'touchmove', this.handleMouseMove_);
+    this.off(doc, 'touchend', this.handleMouseUp_);
 
     this.update();
   }
@@ -274,7 +280,7 @@ class Slider extends Component {
   /**
    * Calculate distance for slider
    *
-   * @param {EventTarget~Event} event
+   * @param {Event} event
    *        The event that caused this function to run.
    *
    * @return {number}
@@ -292,11 +298,11 @@ class Slider extends Component {
   }
 
   /**
-   * Handle a `keydown` event on the `Slider`. Watches for left, rigth, up, and down
+   * Handle a `keydown` event on the `Slider`. Watches for left, right, up, and down
    * arrow keys. This function will only be called when the slider has focus. See
    * {@link Slider#handleFocus} and {@link Slider#handleBlur}.
    *
-   * @param {EventTarget~Event} event
+   * @param {KeyboardEvent} event
    *        the `keydown` event that caused this function to run.
    *
    * @listens keydown

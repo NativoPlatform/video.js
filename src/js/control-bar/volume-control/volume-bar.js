@@ -4,9 +4,12 @@
 import Slider from '../../slider/slider.js';
 import Component from '../../component.js';
 import * as Dom from '../../utils/dom.js';
+import {clamp} from '../../utils/num.js';
+import {IS_IOS, IS_ANDROID} from '../../utils/browser.js';
 
 // Required children
 import './volume-level.js';
+import './mouse-volume-level-display.js';
 
 /**
  * The bar that contains the volume level and can be clicked on to adjust the level
@@ -18,7 +21,7 @@ class VolumeBar extends Slider {
   /**
    * Creates an instance of this class.
    *
-   * @param {Player} player
+   * @param { import('../../player').default } player
    *        The `Player` that this class should be attached to.
    *
    * @param {Object} [options]
@@ -26,8 +29,8 @@ class VolumeBar extends Slider {
    */
   constructor(player, options) {
     super(player, options);
-    this.on('slideractive', this.updateLastVolume_);
-    this.on(player, 'volumechange', this.updateARIAAttributes);
+    this.on('slideractive', (e) => this.updateLastVolume_(e));
+    this.on(player, 'volumechange', (e) => this.updateARIAAttributes(e));
     player.ready(() => this.updateARIAAttributes());
   }
 
@@ -49,7 +52,7 @@ class VolumeBar extends Slider {
   /**
    * Handle mouse down on volume bar
    *
-   * @param {EventTarget~Event} event
+   * @param {Event} event
    *        The `mousedown` event that caused this to run.
    *
    * @listens mousedown
@@ -65,12 +68,29 @@ class VolumeBar extends Slider {
   /**
    * Handle movement events on the {@link VolumeMenuButton}.
    *
-   * @param {EventTarget~Event} event
+   * @param {Event} event
    *        The event that caused this function to run.
    *
    * @listens mousemove
    */
   handleMouseMove(event) {
+    const mouseVolumeLevelDisplay = this.getChild('mouseVolumeLevelDisplay');
+
+    if (mouseVolumeLevelDisplay) {
+      const volumeBarEl = this.el();
+      const volumeBarRect = Dom.getBoundingClientRect(volumeBarEl);
+      const vertical = this.vertical();
+      let volumeBarPoint = Dom.getPointerPosition(volumeBarEl, event);
+
+      volumeBarPoint = vertical ? volumeBarPoint.y : volumeBarPoint.x;
+      // The default skin has a gap on either side of the `VolumeBar`. This means
+      // that it's possible to trigger this behavior outside the boundaries of
+      // the `VolumeBar`. This ensures we stay within it at all times.
+      volumeBarPoint = clamp(volumeBarPoint, 0, 1);
+
+      mouseVolumeLevelDisplay.update(volumeBarRect, volumeBarPoint, vertical);
+    }
+
     if (!Dom.isSingleLeftClick(event)) {
       return;
     }
@@ -120,7 +140,7 @@ class VolumeBar extends Slider {
   /**
    * Update ARIA accessibility attributes
    *
-   * @param {EventTarget~Event} [event]
+   * @param {Event} [event]
    *        The `volumechange` event that caused this function to run.
    *
    * @listens Player#volumechange
@@ -173,6 +193,11 @@ VolumeBar.prototype.options_ = {
   ],
   barName: 'volumeLevel'
 };
+
+// MouseVolumeLevelDisplay tooltip should not be added to a player on mobile devices
+if (!IS_IOS && !IS_ANDROID) {
+  VolumeBar.prototype.options_.children.splice(0, 0, 'mouseVolumeLevelDisplay');
+}
 
 /**
  * Call the update event for this Slider when this event happens on the player.

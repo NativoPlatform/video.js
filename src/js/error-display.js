@@ -15,7 +15,7 @@ class ErrorDisplay extends ModalDialog {
   /**
    * Creates an instance of this class.
    *
-   * @param  {Player} player
+   * @param  { import('./player').default } player
    *         The `Player` that this class should be attached to.
    *
    * @param  {Object} [options]
@@ -23,7 +23,7 @@ class ErrorDisplay extends ModalDialog {
    */
   constructor(player, options) {
     super(player, options);
-    this.on(player, 'error', this.open);
+    this.on(player, 'error', (e) => this.open(e));
   }
 
   /**

@@ -8,12 +8,10 @@ import log from '../utils/log.js';
 import * as browser from '../utils/browser.js';
 import document from 'global/document';
 import window from 'global/window';
-import {assign} from '../utils/obj';
-import mergeOptions from '../utils/merge-options.js';
-import {toTitleCase} from '../utils/string-cases.js';
+import {defineLazyProperty, merge} from '../utils/obj';
+import {toTitleCase} from '../utils/str.js';
 import {NORMAL as TRACK_TYPES, REMOTE} from '../tracks/track-types';
 import setupSourceset from './setup-sourceset';
-import defineLazyProperty from '../utils/define-lazy-property.js';
 import {silencePromise} from '../utils/promise';
 
 /**
@@ -30,7 +28,7 @@ class Html5 extends Tech {
   * @param {Object} [options]
   *        The key/value store of player options.
   *
-  * @param {Component~ReadyCallback} ready
+  * @param {Function} [ready]
   *        Callback function to call when the `HTML5` Tech is ready.
   */
   constructor(options, ready) {
@@ -38,6 +36,8 @@ class Html5 extends Tech {
 
     const source = options.source;
     let crossoriginTracks = false;
+
+    this.featuresVideoFrameCallback = this.featuresVideoFrameCallback && this.el_.tagName === 'VIDEO';
 
     // Set the source if one is provided
     // 1) Check if the source is new (if not, we want to keep the original so playback isn't interrupted)
@@ -53,6 +53,8 @@ class Html5 extends Tech {
     if (options.enableSourceset) {
       this.setupSourcesetHandling_();
     }
+
+    this.isScrubbing_ = false;
 
     if (this.el_.hasChildNodes()) {
 
@@ -103,8 +105,7 @@ class Html5 extends Tech {
     // Our goal should be to get the custom controls on mobile solid everywhere
     // so we can remove this all together. Right now this will block custom
     // controls on touch enabled laptops like the Chrome Pixel
-    if ((browser.TOUCH_ENABLED || browser.IS_IPHONE ||
-        browser.IS_NATIVE_ANDROID) && options.nativeControlsForTouch === true) {
+    if ((browser.TOUCH_ENABLED || browser.IS_IPHONE) && options.nativeControlsForTouch === true) {
       this.setControls(true);
     }
 
@@ -383,7 +384,7 @@ class Html5 extends Tech {
 
         // determine if native controls should be used
         const tagAttributes = this.options_.tag && Dom.getAttributes(this.options_.tag);
-        const attributes = mergeOptions({}, tagAttributes);
+        const attributes = merge({}, tagAttributes);
 
         if (!browser.TOUCH_ENABLED || this.options_.nativeControlsForTouch !== true) {
           delete attributes.controls;
@@ -391,7 +392,7 @@ class Html5 extends Tech {
 
         Dom.setAttributes(
           el,
-          assign(attributes, {
+          Object.assign(attributes, {
             id: this.options_.techId,
             class: 'vjs-tech'
           })
@@ -524,8 +525,28 @@ class Html5 extends Tech {
     });
   }
 
+  /**
+   * Set whether we are scrubbing or not.
+   * This is used to decide whether we should use `fastSeek` or not.
+   * `fastSeek` is used to provide trick play on Safari browsers.
+   *
+   * @param {boolean} isScrubbing
+   *                  - true for we are currently scrubbing
+   *                  - false for we are no longer scrubbing
+   */
   setScrubbing(isScrubbing) {
     this.isScrubbing_ = isScrubbing;
+  }
+
+  /**
+   * Get whether we are scrubbing or not.
+   *
+   * @return {boolean} isScrubbing
+   *                  - true for we are currently scrubbing
+   *                  - false for we are no longer scrubbing
+   */
+  scrubbing() {
+    return this.isScrubbing_;
   }
 
   /**
@@ -536,7 +557,7 @@ class Html5 extends Tech {
    */
   setCurrentTime(seconds) {
     try {
-      if (this.isScrubbing_ && this.el_.fastSeek) {
+      if (this.isScrubbing_ && this.el_.fastSeek && browser.IS_ANY_SAFARI) {
         this.el_.fastSeek(seconds);
       } else {
         this.el_.currentTime = seconds;
@@ -619,11 +640,14 @@ class Html5 extends Tech {
 
     const endFn = function() {
       this.trigger('fullscreenchange', { isFullscreen: false });
+      // Safari will sometimes set controls on the videoelement when existing fullscreen.
+      if (this.el_.controls && !this.options_.nativeControlsForTouch && this.controls()) {
+        this.el_.controls = false;
+      }
     };
 
     const beginFn = function() {
-      if ('webkitPresentationMode' in this.el_ &&
-        this.el_.webkitPresentationMode !== 'picture-in-picture') {
+      if ('webkitPresentationMode' in this.el_ && this.el_.webkitPresentationMode !== 'picture-in-picture') {
         this.one('webkitendfullscreen', endFn);
 
         this.trigger('fullscreenchange', {
@@ -642,22 +666,14 @@ class Html5 extends Tech {
   }
 
   /**
-   * Check if fullscreen is supported on the current playback device.
+   * Check if fullscreen is supported on the video el.
    *
    * @return {boolean}
    *         - True if fullscreen is supported.
    *         - False if fullscreen is not supported.
    */
   supportsFullScreen() {
-    if (typeof this.el_.webkitEnterFullScreen === 'function') {
-      const userAgent = window.navigator && window.navigator.userAgent || '';
-
-      // Seems to be broken in Chromium/Chrome && Safari in Leopard
-      if ((/Android/).test(userAgent) || !(/Chrome|Mac OS X 10.5/).test(userAgent)) {
-        return true;
-      }
-    }
-    return false;
+    return typeof this.el_.webkitEnterFullScreen === 'function';
   }
 
   /**
@@ -714,6 +730,35 @@ class Html5 extends Tech {
    */
   requestPictureInPicture() {
     return this.el_.requestPictureInPicture();
+  }
+
+  /**
+   * Native requestVideoFrameCallback if supported by browser/tech, or fallback
+   * Don't use rVCF on Safari when DRM is playing, as it doesn't fire
+   * Needs to be checked later than the constructor
+   * This will be a false positive for clear sources loaded after a Fairplay source
+   *
+   * @param {function} cb function to call
+   * @return {number} id of request
+   */
+  requestVideoFrameCallback(cb) {
+    if (this.featuresVideoFrameCallback && !this.el_.webkitKeys) {
+      return this.el_.requestVideoFrameCallback(cb);
+    }
+    return super.requestVideoFrameCallback(cb);
+  }
+
+  /**
+   * Native or fallback requestVideoFrameCallback
+   *
+   * @param {number} id request id to cancel
+   */
+  cancelVideoFrameCallback(id) {
+    if (this.featuresVideoFrameCallback && !this.el_.webkitKeys) {
+      this.el_.cancelVideoFrameCallback(id);
+    } else {
+      super.cancelVideoFrameCallback(id);
+    }
   }
 
   /**
@@ -855,12 +900,12 @@ class Html5 extends Tech {
    *
    * @param {Object} options The object should contain values for
    * kind, language, label, and src (location of the WebVTT file)
-   * @param {boolean} [manualCleanup=true] if set to false, the TextTrack will be
-   * automatically removed from the video element whenever the source changes
+   * @param {boolean} [manualCleanup=false] if set to true, the TextTrack
+   * will not be removed from the TextTrackList and HtmlTrackElementList
+   * after a source change
    * @return {HTMLTrackElement} An Html Track Element.
    * This can be an emulated {@link HTMLTrackElement} or a native one.
-   * @deprecated The default value of the "manualCleanup" parameter will default
-   * to "false" in upcoming versions of Video.js
+   *
    */
   addRemoteTextTrack(options, manualCleanup) {
     const htmlTrackElement = super.addRemoteTextTrack(options, manualCleanup);
@@ -916,13 +961,8 @@ class Html5 extends Tech {
       videoPlaybackQuality.totalVideoFrames = this.el().webkitDecodedFrameCount;
     }
 
-    if (window.performance && typeof window.performance.now === 'function') {
+    if (window.performance) {
       videoPlaybackQuality.creationTime = window.performance.now();
-    } else if (window.performance &&
-               window.performance.timing &&
-               typeof window.performance.timing.navigationStart === 'number') {
-      videoPlaybackQuality.creationTime =
-        window.Date.now() - window.performance.timing.navigationStart;
     }
 
     return videoPlaybackQuality;
@@ -1010,7 +1050,26 @@ Html5.canControlVolume = function() {
     const volume = Html5.TEST_VID.volume;
 
     Html5.TEST_VID.volume = (volume / 2) + 0.1;
-    return volume !== Html5.TEST_VID.volume;
+
+    const canControl = volume !== Html5.TEST_VID.volume;
+
+    // With the introduction of iOS 15, there are cases where the volume is read as
+    // changed but reverts back to its original state at the start of the next tick.
+    // To determine whether volume can be controlled on iOS,
+    // a timeout is set and the volume is checked asynchronously.
+    // Since `features` doesn't currently work asynchronously, the value is manually set.
+    if (canControl && browser.IS_IOS) {
+      window.setTimeout(() => {
+        if (Html5 && Html5.prototype) {
+          Html5.prototype.featuresVolumeControl = volume !== Html5.TEST_VID.volume;
+        }
+      });
+
+      // default iOS to false, which will be updated in the timeout above.
+      return false;
+    }
+
+    return canControl;
   } catch (e) {
     return false;
   }
@@ -1021,7 +1080,7 @@ Html5.canControlVolume = function() {
  * Some devices, e.g. iOS, don't allow changing volume
  * but permits muting/unmuting.
  *
- * @return {bolean}
+ * @return {boolean}
  *      - True if volume can be muted
  *      - False otherwise
  */
@@ -1166,7 +1225,7 @@ Html5.Events = [
 /**
  * Boolean indicating whether the `Tech` supports muting volume.
  *
- * @type {bolean}
+ * @type {boolean}
  * @default {@link Html5.canMuteVolume}
  */
 
@@ -1205,7 +1264,6 @@ Html5.Events = [
  * @default {@link Html5.supportsNativeAudioTracks}
  */
 [
-  ['featuresVolumeControl', 'canControlVolume'],
   ['featuresMuteControl', 'canMuteVolume'],
   ['featuresPlaybackRate', 'canControlPlaybackRate'],
   ['featuresSourceset', 'canOverrideAttributes'],
@@ -1215,6 +1273,8 @@ Html5.Events = [
 ].forEach(function([key, fn]) {
   defineLazyProperty(Html5.prototype, key, () => Html5[fn](), true);
 });
+
+Html5.prototype.featuresVolumeControl = Html5.canControlVolume();
 
 /**
  * Boolean indicating whether the `HTML5` tech currently supports the media element
@@ -1254,37 +1314,12 @@ Html5.prototype.featuresProgressEvents = true;
  */
 Html5.prototype.featuresTimeupdateEvents = true;
 
-// HTML5 Feature detection and Device Fixes --------------------------------- //
-let canPlayType;
-
-Html5.patchCanPlayType = function() {
-
-  // Android 4.0 and above can play HLS to some extent but it reports being unable to do so
-  // Firefox and Chrome report correctly
-  if (browser.ANDROID_VERSION >= 4.0 && !browser.IS_FIREFOX && !browser.IS_CHROME) {
-    canPlayType = Html5.TEST_VID && Html5.TEST_VID.constructor.prototype.canPlayType;
-    Html5.TEST_VID.constructor.prototype.canPlayType = function(type) {
-      const mpegurlRE = /^application\/(?:x-|vnd\.apple\.)mpegurl/i;
-
-      if (type && mpegurlRE.test(type)) {
-        return 'maybe';
-      }
-      return canPlayType.call(this, type);
-    };
-  }
-};
-
-Html5.unpatchCanPlayType = function() {
-  const r = Html5.TEST_VID.constructor.prototype.canPlayType;
-
-  if (canPlayType) {
-    Html5.TEST_VID.constructor.prototype.canPlayType = canPlayType;
-  }
-  return r;
-};
-
-// by default, patch the media element
-Html5.patchCanPlayType();
+/**
+ * Whether the HTML5 el supports `requestVideoFrameCallback`
+ *
+ * @type {boolean}
+ */
+Html5.prototype.featuresVideoFrameCallback = !!(Html5.TEST_VID && Html5.TEST_VID.requestVideoFrameCallback);
 
 Html5.disposeMediaElement = function(el) {
   if (!el) {
@@ -1466,7 +1501,7 @@ Html5.resetMediaElement = function(el) {
 
   /**
    * Set the value of `defaultMuted` on the media element. `defaultMuted` indicates that the current
-   * audio level should be silent, but will only effect the muted level on intial playback..
+   * audio level should be silent, but will only effect the muted level on initial playback..
    *
    * @method Html5.prototype.setDefaultMuted
    * @param {boolean} defaultMuted

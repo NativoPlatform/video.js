@@ -2,11 +2,12 @@
 /* eslint-disable camelcase */
 /* eslint-disable dot-notation */
 /**
- * These tests run on the minified, window.ntv_videojs and ensure the needed
+ * These tests run on the minified, window.ntv-videojs and ensure the needed
  * APIs still exist
  */
 import document from 'global/document';
 import window from 'global/window';
+
 const videojs = window['ntv_videojs'];
 
 QUnit.module('Player API');
@@ -251,15 +252,17 @@ QUnit.test('component can be subclassed externally', function(assert) {
   const Component = videojs.getComponent('Component');
   const ControlBar = videojs.getComponent('ControlBar');
 
-  const player = new (videojs.extend(Component, {
-    reportUserActivity() {},
+  class TestComponent extends Component {
+    reportUserActivity() {}
     textTracks() {
       return {
         addEventListener: Function.prototype,
         removeEventListener: Function.prototype
       };
     }
-  }))({
+  }
+
+  const player = new TestComponent({
     id() {},
     reportUserActivity() {}
   });
@@ -277,14 +280,15 @@ function testHelperMakeTag() {
 
 QUnit.test('should extend Component', function(assert) {
   const Component = videojs.getComponent('Component');
-  const MyComponent = videojs.extend(Component, {
+
+  class MyComponent extends Component {
     constructor() {
       this.bar = true;
-    },
+    }
     foo() {
       return true;
     }
-  });
+  }
 
   const myComponent = new MyComponent();
 
@@ -293,7 +297,8 @@ QUnit.test('should extend Component', function(assert) {
   assert.ok(myComponent.bar, 'the constructor function is used');
   assert.ok(myComponent.foo(), 'instance methods are applied');
 
-  const NoMethods = videojs.extend(Component);
+  class NoMethods extends Component {}
+
   const noMethods = new NoMethods({});
 
   assert.ok(noMethods.on, 'should extend component with no methods or constructor');

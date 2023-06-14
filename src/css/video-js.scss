@@ -2,7 +2,7 @@
 @import "private-variables";
 @import "utilities";
 
-@import "node_modules/videojs-font/scss/icons";
+@import "videojs-font/scss/icons";
 
 // Custom Nativo Styles
 @import "nativo";
@@ -44,6 +44,8 @@
 @import "components/audio";
 @import "components/adaptive";
 @import "components/captions-settings";
+@import "components/title-bar";
+@import "components/skip-buttons";
 
 @import "print";
 
@@ -60,11 +62,8 @@
 // The rule is needed for :focus-visible polyfill
 .js-focus-visible .video-js *:focus:not(.focus-visible) {
   outline: none;
-  background: none;
 }
 
-.video-js *:focus:not(:focus-visible),
-.video-js .vjs-menu *:focus:not(:focus-visible) {
+.video-js *:focus:not(:focus-visible) {
   outline: none;
-  background: none;
 }

@@ -2,6 +2,7 @@
  * @file track-list.js
  */
 import EventTarget from '../event-target';
+import {isEvented} from '../mixins/evented';
 
 /**
  * Common functionaliy between {@link TextTrackList}, {@link AudioTrackList}, and
@@ -13,7 +14,7 @@ class TrackList extends EventTarget {
   /**
    * Create an instance of this class
    *
-   * @param {Track[]} tracks
+   * @param { import('./track').default[] } tracks
    *        A list of tracks to initialize the list with.
    *
    * @abstract
@@ -43,7 +44,7 @@ class TrackList extends EventTarget {
   /**
    * Add a {@link Track} to the `TrackList`
    *
-   * @param {Track} track
+   * @param { import('./track').default } track
    *        The audio, video, or text track to add to the list.
    *
    * @fires TrackList#addtrack
@@ -66,7 +67,7 @@ class TrackList extends EventTarget {
        * Triggered when a track is added to a track list.
        *
        * @event TrackList#addtrack
-       * @type {EventTarget~Event}
+       * @type {Event}
        * @property {Track} track
        *           A reference to track that was added.
        */
@@ -76,12 +77,32 @@ class TrackList extends EventTarget {
         target: this
       });
     }
+
+    /**
+     * Triggered when a track label is changed.
+     *
+     * @event TrackList#addtrack
+     * @type {Event}
+     * @property {Track} track
+     *           A reference to track that was added.
+     */
+    track.labelchange_ = () => {
+      this.trigger({
+        track,
+        type: 'labelchange',
+        target: this
+      });
+    };
+
+    if (isEvented(track)) {
+      track.addEventListener('labelchange', track.labelchange_);
+    }
   }
 
   /**
    * Remove a {@link Track} from the `TrackList`
    *
-   * @param {Track} rtrack
+   * @param { import('./track').default } rtrack
    *        The audio, video, or text track to remove from the list.
    *
    * @fires TrackList#removetrack
@@ -110,7 +131,7 @@ class TrackList extends EventTarget {
      * Triggered when a track is removed from track list.
      *
      * @event TrackList#removetrack
-     * @type {EventTarget~Event}
+     * @type {Event}
      * @property {Track} track
      *           A reference to track that was removed.
      */
@@ -126,7 +147,7 @@ class TrackList extends EventTarget {
    *
    * @param {string} id - the id of the track to get
    * @method getTrackById
-   * @return {Track}
+   * @return { import('./track').default }
    * @private
    */
   getTrackById(id) {
@@ -149,7 +170,7 @@ class TrackList extends EventTarget {
  * Triggered when a different track is selected/enabled.
  *
  * @event TrackList#change
- * @type {EventTarget~Event}
+ * @type {Event}
  */
 
 /**
@@ -161,7 +182,8 @@ class TrackList extends EventTarget {
 TrackList.prototype.allowedEvents_ = {
   change: 'change',
   addtrack: 'addtrack',
-  removetrack: 'removetrack'
+  removetrack: 'removetrack',
+  labelchange: 'labelchange'
 };
 
 // emulate attribute EventHandler support to allow for feature detection
